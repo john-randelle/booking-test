@@ -8,6 +8,8 @@ export const env = createEnv({
     NODE_ENV: z.enum(["development", "test", "staging", "production"]),
     PORT: z.coerce.number(),
 
+    WEB_ORIGIN: z.string().url(),
+
     BETTER_AUTH_SECRET: z.string(),
     BETTER_AUTH_URL: z.url(),
 

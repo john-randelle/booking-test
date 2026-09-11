@@ -1,3 +1,5 @@
+"use client"
+import { useState } from "react"
 import { cn } from "cn"
 
 import { Button } from "@workspace/ui/components/button"
@@ -11,17 +13,42 @@ import {
 import {
   Field,
   FieldDescription,
+  FieldError,
   FieldGroup,
   FieldLabel,
 } from "@workspace/ui/components/field"
 import { Input } from "@workspace/ui/components/input"
 import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@workspace/ui/components/dialog"
 import { Label } from "@workspace/ui/components/label"
+import {authClient} from "@/lib/auth-client"
+
+
 
 export function LoginForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
+   const [error, setError] = useState<string | null>(null)
+   const [pending, setPending] = useState(false)
+
+  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault()
+    setError(null)
+    setPending(true)
+
+    const form = new FormData(event.currentTarget)
+    const result = await authClient.signIn.email({
+      email: String(form.get("email")),
+      password: String(form.get("password")),
+    })
+
+    setPending(false)
+    if (result.error) {
+      setError(result.error.message ?? "Login failed")
+      return
+    }
+    window.location.href = "/"
+  }
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
@@ -32,12 +59,13 @@ export function LoginForm({
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form>
+          <form onSubmit={handleSubmit}>
             <FieldGroup>
               <Field>
                 <FieldLabel htmlFor="email">Email</FieldLabel>
                 <Input
                   id="email"
+                  name="email"
                   type="email"
                   placeholder="m@example.com"
                   required
@@ -53,10 +81,13 @@ export function LoginForm({
                       Forgot your password?
                     </a>
                 </div>
-                <Input id="password" type="password" required />
+                <Input id="password" name="password" type="password" required />
               </Field>
+              {error && <FieldError>{error}</FieldError>}
               <Field>
-                <Button type="submit">Login</Button>
+                <Button type="submit" disabled={pending}>
+                  {pending ? "Logging in..." : "Login"}
+                </Button>
                 <Button variant="outline" type="button">
                   Login with Cognito
                 </Button>
