@@ -88,7 +88,7 @@ export function LoginForm({
                 <Button type="submit" disabled={pending}>
                   {pending ? "Logging in..." : "Login"}
                 </Button>
-                <Button variant="outline" type="button" onClick={() => authClient.signIn.social({ provider: "cognito", callbackURL: "/"})}>
+                <Button variant="outline" type="button" onClick={() => authClient.signIn.social({ provider: "cognito", callbackURL: `${window.location.origin}/`})}>
                   Login with Cognito
                 </Button>
                 <FieldDescription className="text-center">
