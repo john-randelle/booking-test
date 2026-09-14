@@ -8,6 +8,10 @@ export const env = createEnv({
     NODE_ENV: z.enum(["development", "test", "staging", "production"]),
     PORT: z.coerce.number(),
 
+    COGNITO_USER_POOL_ID: z.string(),
+    COGNITO_CLIENT_ID: z.string(),
+    COGNITO_CLIENT_SECRET: z.string(),
+
     WEB_ORIGIN: z.string().url(),
 
     BETTER_AUTH_SECRET: z.string(),
