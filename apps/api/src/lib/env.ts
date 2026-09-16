@@ -26,6 +26,10 @@ export const env = createEnv({
     DB_USER: z.string().optional(),
     DB_NAME: z.string().optional(),
     AWS_REGION: z.string(),
+
+    //Acuity API
+    ACUITY_API_KEY: z.string().optional(),
+    ACUITY_USER_ID: z.string().optional(),
   },
 
   runtimeEnv: process.env,

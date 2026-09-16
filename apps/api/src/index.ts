@@ -3,11 +3,12 @@ import { Hono } from 'hono'
 import { env } from './lib/env.js'
 import { auth } from './lib/auth.js'
 import { cors } from 'hono/cors'
+import { syncCalendars, listCalendars } from './services/calendar-service.js'
 
 const app = new Hono()
 
 app.use(
-  '/api/auth/*',
+  '/api/*',
   cors({
     origin: env.WEB_ORIGIN,
     allowHeaders: ['Content-Type'],
@@ -28,3 +29,6 @@ serve({
 }, (info) => {
   console.log(`Server is running on http://localhost:${info.port}`)
 })
+
+app.post('/api/calendars/sync', async (c) => c.json(await syncCalendars()))
+app.get('/api/calendars', async (c) => c.json(await listCalendars()))
