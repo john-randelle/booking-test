@@ -44,12 +44,20 @@ export function LoginForm({
 
     setPending(false)
     if (result.error) {
-      setError(result.error.message ?? "Login failed")
-      return
+    const code = result.error.message ?? "";
+    setError(
+      code === "ADMIN_COGNITO_ACCOUNT"
+        ? "This is an admin account — use the Cognito button below."
+        : code === "ACCOUNT_NOT_ACTIVATED"
+          ? "Check your invitation email to set a password first."
+          : code || "Login failed",
+  );
+    return;
+      }
+      window.location.href = "/"
     }
-    window.location.href = "/"
-  }
-  return (
+    
+   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
       <Card>
         <CardHeader>
@@ -91,9 +99,6 @@ export function LoginForm({
                 <Button variant="outline" type="button" onClick={() => authClient.signIn.social({ provider: "cognito", callbackURL: `${window.location.origin}/`})}>
                   Login with Cognito
                 </Button>
-                <FieldDescription className="text-center">
-                  Don&apos;t have an account? <a href="#">Sign up</a>
-                </FieldDescription>
               </Field>
             </FieldGroup>
           </form>

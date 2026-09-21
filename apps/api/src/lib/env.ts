@@ -14,6 +14,9 @@ export const env = createEnv({
 
     WEB_ORIGIN: z.string().url(),
 
+    INVITE_SECRET: z.string().optional(),
+    MAIL_FROM: z.string().optional(),
+
     BETTER_AUTH_SECRET: z.string(),
     BETTER_AUTH_URL: z.url(),
 

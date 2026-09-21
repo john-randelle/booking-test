@@ -7,6 +7,13 @@ export const user = pgTable("user", {
   email: text("email").notNull().unique(),
   emailVerified: boolean("email_verified").default(false).notNull(),
   image: text("image"),
+  firstName: text("first_name"),
+  lastName: text("last_name"),
+  phone: text("phone"),
+  role: text("role"),
+  banned: boolean("banned").default(false),
+  banReason: text("ban_reason"),
+  banExpires: timestamp("ban_expires"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()
@@ -26,6 +33,8 @@ export const session = pgTable(
       .notNull(),
     ipAddress: text("ip_address"),
     userAgent: text("user_agent"),
+    impersonatedBy: text("impersonated_by"),
+    activeOrganizationId: text("active_organization_id"),
     userId: text("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
@@ -72,6 +81,49 @@ export const verification = pgTable(
   },
   (table) => [index("verification_identifier_idx").on(table.identifier)],
 );
+
+export const organization = pgTable("organization", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  slug: text("slug").notNull().unique(),
+  logo: text("logo"),
+  metadata: text("metadata"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const member = pgTable(
+  "member",
+  {
+    id: text("id").primaryKey(),
+    organizationId: text("organization_id")
+      .notNull()
+      .references(() => organization.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    role: text("role").default("member").notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (table) => [
+    index("member_organizationId_idx").on(table.organizationId),
+    index("member_userId_idx").on(table.userId),
+  ],
+);
+
+export const invitation = pgTable("invitation", {
+  id: text("id").primaryKey(),
+  organizationId: text("organization_id")
+    .notNull()
+    .references(() => organization.id, { onDelete: "cascade" }),
+  email: text("email").notNull(),
+  role: text("role"),
+  status: text("status").default("pending").notNull(),
+  inviterId: text("inviter_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
 
 export const userRelations = relations(user, ({ many }) => ({
   sessions: many(session),

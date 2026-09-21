@@ -1,5 +1,5 @@
 import Link from "next/link"
-
+import { apiFetch } from "@/lib/session";
 import { Button } from "@workspace/ui/components/button"
 import {
   Table,
@@ -24,7 +24,7 @@ interface Calendar {
 }
 
 export default async function Page() {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/calendars`)
+  const res = await apiFetch("/api/calendars")
 
   if (!res.ok) {
     throw new Error(`Failed to load calendars: ${res.status}`)
