@@ -17,7 +17,7 @@ export default async function DashboardLayout({
       <header className="flex items-center gap-6 border-b px-6 py-3">
         <nav className="flex items-center gap-4 text-sm">
           <Link href="/">Dashboard</Link>
-          <Link href="/calendars">Calendars</Link>
+          <Link href="/calendars">Specialists</Link>
           {isAdmin && <Link href="/users">Users</Link>}
           {isAdmin && <Link href="/organizations">Organizations</Link>}
         </nav>

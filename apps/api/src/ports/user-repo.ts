@@ -37,4 +37,12 @@ export interface UserListItem extends AppUser {
   organizationName: string | null;
   invited: boolean;
 }
+export interface SpecialistLookup {
+  findSpecialistById(id: string): Promise<AppUser | null>;
+  findSpecialistByEmail(email: string): Promise<AppUser | null>;
+}
+
+export interface ReferrerLookup {
+  findReferrerByEmail(email: string): Promise<AppUser | null>;
+}
 

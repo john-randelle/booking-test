@@ -8,7 +8,7 @@ const ROLES = {
   specialist: specialistRole,
 } as const;
 
-type Resource = "user" | "calendar";
+type Resource = "user" | "calendar" | "appointment";
 
 export function requirePermission(resource: Resource, action: string) {
   return createMiddleware<AppEnv>(async (c, next) => {

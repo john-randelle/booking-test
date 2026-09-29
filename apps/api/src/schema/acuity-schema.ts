@@ -1,4 +1,5 @@
 import { pgTable, integer, text, boolean, timestamp } from "drizzle-orm/pg-core";
+import { user } from "./auth-schema.js";
 
 export const calender = pgTable("calendar", {
   id: text("id").primaryKey(),
@@ -11,4 +12,7 @@ export const calender = pgTable("calendar", {
   timezone: text("timezone").notNull(),
   isValid: boolean("is_valid").notNull().default(true),
   syncedAt: timestamp("synced_at").defaultNow().notNull(),
+  specialistId: text("specialist_id")
+  .unique()
+  .references(() => user.id, { onDelete: "set null" }),
 });

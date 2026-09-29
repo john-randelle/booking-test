@@ -1,8 +1,9 @@
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { db } from "../lib/db.js";
 import { user, account, member, organization } from "../schema/auth-schema.js";
 import type {
   AppUser, CreateUserInput, UserReader, UserWriter, UserRole, UserListItem,
+  SpecialistLookup, ReferrerLookup,
 } from "../ports/user-repo.js";
 
 const columns = {
@@ -16,7 +17,9 @@ const columns = {
   banned: user.banned,
 };
 
-export class DrizzleUserRepository implements UserReader, UserWriter {
+export class DrizzleUserRepository
+  implements UserReader, UserWriter, SpecialistLookup, ReferrerLookup
+{
   async findById(id: string): Promise<AppUser | null> {
     const [row] = await db.select(columns).from(user).where(eq(user.id, id)).limit(1);
     return row ?? null;
@@ -24,6 +27,31 @@ export class DrizzleUserRepository implements UserReader, UserWriter {
 
   async findByEmail(email: string): Promise<AppUser | null> {
     const [row] = await db.select(columns).from(user).where(eq(user.email, email)).limit(1);
+    return row ?? null;
+  }
+
+  findSpecialistByEmail(email: string): Promise<AppUser | null> {
+    return this.findByRoleAndEmail("specialist", email);
+  }
+
+  findReferrerByEmail(email: string): Promise<AppUser | null> {
+    return this.findByRoleAndEmail("referrer", email);
+  }
+
+  private async findByRoleAndEmail(role: UserRole, email: string): Promise<AppUser | null> {
+    const [row] = await db.select(columns).from(user)
+      .where(and(
+        sql`lower(${user.email}) = ${email.trim().toLowerCase()}`,
+        eq(user.role, role),
+      ))
+      .limit(1);
+    return row ?? null;
+  }
+
+  async findSpecialistById(id: string): Promise<AppUser | null> {
+    const [row] = await db.select(columns).from(user)
+      .where(and(eq(user.id, id), eq(user.role, "specialist")))
+      .limit(1);
     return row ?? null;
   }
 
@@ -48,6 +76,7 @@ export class DrizzleUserRepository implements UserReader, UserWriter {
         ? eq(member.organizationId, filter.organizationId)
         : undefined,
     );
+
 
   return rows.map(({ credentialId, credentialPassword, ...rest }) => ({
     ...rest,

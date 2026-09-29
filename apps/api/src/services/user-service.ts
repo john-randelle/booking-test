@@ -1,5 +1,6 @@
 import type { UserRole, AppUser, CreateUserInput, UserReader, UserWriter, UserListItem } from "../ports/user-repo.js";
 import type { InvitationSender } from "../ports/mailer.js";
+import type { CalendarLinker } from "../ports/calendar-linker.js";
 
 export class ConflictError extends Error {}
 export class ValidationError extends Error {}
@@ -12,6 +13,7 @@ export class UserService {
     private readonly reader: UserReader,
     private readonly writer: UserWriter,
     private readonly invitations: InvitationSender,
+    private readonly calendarLinks: CalendarLinker,
   ) {}
 
   list(filter?: { organizationId?: string }): Promise<UserListItem[]> {
@@ -38,6 +40,17 @@ export class UserService {
 
     const created = await this.writer.create({ ...input, email });
     await this.invitations.sendInvitation(created);
+
+    if (created.role === "specialist") {
+      // Best effort: the user already exists and has been invited, so a failed
+      // link must not turn this into an error. Re-sync or manual assign fixes it.
+      try {
+        await this.calendarLinks.linkSpecialist(created.id);
+      } catch (error) {
+        console.warn(`[users] Could not link calendar for ${created.email}:`, error);
+      }
+    }
+
     return created;
   }
 
@@ -45,8 +58,14 @@ export class UserService {
     if (!ASSIGNABLE_ROLES.includes(role)) {
       throw new ValidationError("Role must be referrer or specialist");
     }
-    await this.mustExist(id);
+    const found = await this.mustExist(id);
     await this.writer.setRole(id, role);
+
+    if (role === "specialist" && found.role !== "specialist") {
+      await this.calendarLinks.linkSpecialist(id);
+    } else if (role !== "specialist" && found.role === "specialist") {
+      await this.calendarLinks.unlinkSpecialist(id);
+    }
   }
 
   async setBanned(id: string, banned: boolean): Promise<void> {

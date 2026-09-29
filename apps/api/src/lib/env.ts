@@ -33,6 +33,10 @@ export const env = createEnv({
     //Acuity API
     ACUITY_API_KEY: z.string().optional(),
     ACUITY_USER_ID: z.string().optional(),
+    // Intake form field whose value is the referring user's email.
+    ACUITY_REFERRER_FIELD: z.string().default("Referrer email"),
+    // Safety-net sync alongside webhooks; 0 disables it.
+    APPOINTMENT_SYNC_INTERVAL_MINUTES: z.coerce.number().int().min(0).default(15),
   },
 
   runtimeEnv: process.env,

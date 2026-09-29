@@ -22,6 +22,20 @@
       "when": 1789708541185,
       "tag": "0002_needy_molly_hayes",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1790657288920,
+      "tag": "0003_equal_bucky",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1790721403813,
+      "tag": "0004_ambitious_shocker",
+      "breakpoints": true
     }
   ]
 }
