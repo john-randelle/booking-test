@@ -59,6 +59,11 @@ export interface AppointmentReader {
   list(filter: AppointmentFilter): Promise<AppointmentListItem[]>;
 }
 
+export interface AppointmentLookup {
+  findById(id: string): Promise<AppointmentListItem | null>;
+}
+
 export interface AppointmentWriter {
-  upsert(input: AppointmentUpsert): Promise<void>;
+  /** Returns the local id of the inserted or updated appointment. */
+  upsert(input: AppointmentUpsert): Promise<string>;
 }

@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import {
   Table,
   TableBody,
@@ -86,9 +88,14 @@ export function AppointmentTable({
             </TableCell>
           </TableRow>,
           ...rows.map((a) => (
-            <TableRow key={a.id}>
+            // The examinee link stretches over the whole row, so any cell opens the case.
+            <TableRow key={a.id} className="relative cursor-pointer">
               <TableCell className="tabular-nums whitespace-nowrap">{timeRange(a)}</TableCell>
-              <TableCell className="font-medium">{examinee(a)}</TableCell>
+              <TableCell className="font-medium">
+                <Link href={`/bookings/${a.id}`} className="after:absolute after:inset-0 hover:underline">
+                  {examinee(a)}
+                </Link>
+              </TableCell>
               <TableCell className="text-muted-foreground">{a.type}</TableCell>
               <TableCell>{a.specialistName ?? a.calendarName ?? "—"}</TableCell>
               {showReferrer && (

@@ -5,12 +5,15 @@ const statement = {
   ...defaultStatements,
   calendar: ["read", "sync", "assign"],
   appointment: ["read", "sync", "refresh"],
+  booking: ["create"],
 } as const;
 export const ac = createAccessControl(statement);
 
 export const adminRole = ac.newRole({
   calendar: ["read", "sync", "assign"],
   appointment: ["read", "sync"],
+  // Quick schedule is admin-only: no other role gets booking:create.
+  booking: ["create"],
   ...adminAc.statements,
 });
 // Referrers and specialists can read appointments; AppointmentService limits

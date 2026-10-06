@@ -25,11 +25,16 @@ import { createAppointmentRoutes } from "./routes/appointments.js";
 import { createAcuityWebhookRoutes } from "./routes/acuity-webhooks.js";
 import { isValidAcuitySignature } from "./lib/acuity/webhook.js";
 import { startAppointmentSyncJob } from "./jobs/appointment-sync-job.js";
+import { AcuityBookingSource } from "./adapter/acuity-booking-source.js";
+import { DrizzleBookingDetailRepository } from "./adapter/drizzle-booking-detail-repo.js";
+import { BookingService } from "./services/booking-service.js";
+import { CaseService } from "./services/case-service.js";
+import { createBookingRoutes } from "./routes/booking.js";
+import { createCaseRoutes } from "./routes/cases.js";
 
 // ── composition root ────────────────────────────────────────────────
-const organizationService = new OrganizationService(
-  new DrizzleOrganizationRepository(),
-);
+const organizationRepo = new DrizzleOrganizationRepository();
+const organizationService = new OrganizationService(organizationRepo);
 
 const userRepo = new DrizzleUserRepository();
 
@@ -44,12 +49,30 @@ const calendarService = new CalendarService(
 const invitationService = new InvitationService(new ConsoleMailer());
 const userService = new UserService(userRepo, userRepo, invitationService, calendarService);
 
+const appointmentRepo = new DrizzleAppointmentRepository();
+
 const appointmentService = new AppointmentService(
-  new DrizzleAppointmentRepository(),
+  appointmentRepo,
   new AcuityAppointmentSource(env.ACUITY_REFERRER_FIELD),
   userRepo,
   calendarRepo,
 );
+
+const bookingSource = new AcuityBookingSource(env.ACUITY_REFERRER_FIELD);
+const bookingDetailRepo = new DrizzleBookingDetailRepository();
+
+const bookingService = new BookingService(
+  calendarRepo,
+  bookingSource,
+  bookingSource,
+  bookingSource,
+  appointmentRepo,
+  bookingDetailRepo,
+  organizationRepo,
+  userRepo,
+);
+
+const caseService = new CaseService(appointmentRepo, bookingDetailRepo);
 
 const app = new Hono<AppEnv>();
 
@@ -90,6 +113,10 @@ app.route("/api/invite", createInviteRoutes());
 app.route("/api/calendars", createCalendarRoutes(calendarService));
 
 app.route("/api/appointments", createAppointmentRoutes(appointmentService));
+
+app.route("/api/booking", createBookingRoutes(bookingService));
+
+app.route("/api/cases", createCaseRoutes(caseService));
 
 if (env.APPOINTMENT_SYNC_INTERVAL_MINUTES > 0) {
   startAppointmentSyncJob(appointmentService, env.APPOINTMENT_SYNC_INTERVAL_MINUTES);

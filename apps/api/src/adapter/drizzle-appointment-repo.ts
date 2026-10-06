@@ -5,7 +5,8 @@ import { appointment } from "../schema/appointment-schema.js";
 import { calender } from "../schema/acuity-schema.js";
 import { user } from "../schema/auth-schema.js";
 import type {
-  AppointmentFilter, AppointmentListItem, AppointmentReader, AppointmentUpsert, AppointmentWriter,
+  AppointmentFilter, AppointmentListItem, AppointmentLookup, AppointmentReader, AppointmentUpsert,
+  AppointmentWriter,
 } from "../ports/appointment-repo.js";
 
 const specialist = alias(user, "specialist");
@@ -30,21 +31,32 @@ const columns = {
   syncedAt: appointment.syncedAt,
 };
 
-export class DrizzleAppointmentRepository implements AppointmentReader, AppointmentWriter {
+function selectListItems() {
+  return db
+    .select({
+      ...columns,
+      calendarId: calender.id,
+      calendarName: calender.name,
+      specialistId: calender.specialistId,
+      specialistName: specialist.name,
+      referrerName: referrer.name,
+    })
+    .from(appointment)
+    .leftJoin(calender, eq(calender.acuityId, appointment.acuityCalendarId))
+    .leftJoin(specialist, eq(specialist.id, calender.specialistId))
+    .leftJoin(referrer, eq(referrer.id, appointment.referrerId));
+}
+
+export class DrizzleAppointmentRepository
+  implements AppointmentReader, AppointmentLookup, AppointmentWriter
+{
+  async findById(id: string): Promise<AppointmentListItem | null> {
+    const [row] = await selectListItems().where(eq(appointment.id, id)).limit(1);
+    return row ?? null;
+  }
+
   async list(filter: AppointmentFilter): Promise<AppointmentListItem[]> {
-    return db
-      .select({
-        ...columns,
-        calendarId: calender.id,
-        calendarName: calender.name,
-        specialistId: calender.specialistId,
-        specialistName: specialist.name,
-        referrerName: referrer.name,
-      })
-      .from(appointment)
-      .leftJoin(calender, eq(calender.acuityId, appointment.acuityCalendarId))
-      .leftJoin(specialist, eq(specialist.id, calender.specialistId))
-      .leftJoin(referrer, eq(referrer.id, appointment.referrerId))
+    return selectListItems()
       .where(and(
         gte(appointment.startsAt, filter.from),
         lte(appointment.startsAt, filter.to),
@@ -55,9 +67,9 @@ export class DrizzleAppointmentRepository implements AppointmentReader, Appointm
       .orderBy(asc(appointment.startsAt));
   }
 
-  async upsert(input: AppointmentUpsert): Promise<void> {
+  async upsert(input: AppointmentUpsert): Promise<string> {
     const { referrerId, ...fields } = input;
-    await db
+    const [row] = await db
       .insert(appointment)
       .values({ id: crypto.randomUUID(), ...fields, referrerId: referrerId ?? null })
       .onConflictDoUpdate({
@@ -68,6 +80,8 @@ export class DrizzleAppointmentRepository implements AppointmentReader, Appointm
           ...(referrerId ? { referrerId } : {}),
           syncedAt: new Date(),
         },
-      });
+      })
+      .returning({ id: appointment.id });
+    return row!.id;
   }
 }

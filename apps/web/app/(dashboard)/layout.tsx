@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 
 import { getSessionUser } from "@/lib/session";
 import { SignOutButton } from "@/components/sign-out-button";
+import { QuickScheduleDialog } from "@/components/quick-schedule/quick-schedule-dialog";
 
 export default async function DashboardLayout({
   children,
@@ -22,6 +23,8 @@ export default async function DashboardLayout({
           {isAdmin && <Link href="/organizations">Organizations</Link>}
         </nav>
         <div className="ml-auto flex items-center gap-3 text-sm">
+          {/* Quick schedule is admin-only; the API enforces this too (booking:create). */}
+          {isAdmin && <QuickScheduleDialog />}
           <span className="text-muted-foreground">
             {user.firstName ?? user.name} · {user.role}
           </span>

@@ -79,33 +79,38 @@ export class AcuityAppointmentSource implements AppointmentSource {
   }
 
   private toSource(a: AcuityAppointment): SourceAppointment {
-    const startsAt = new Date(a.datetime);
-    const durationMinutes = Number.parseInt(a.duration, 10) || 0;
-
-    return {
-      acuityId: a.id,
-      acuityCalendarId: a.calendarID,
-      startsAt,
-      endsAt: new Date(startsAt.getTime() + durationMinutes * 60_000),
-      durationMinutes,
-      timezone: a.timezone,
-      appointmentTypeId: a.appointmentTypeID,
-      type: a.type,
-      canceled: a.canceled,
-      examineeFirstName: this.formValue(a, EXAMINEE_FIRST_NAME),
-      examineeLastName: this.formValue(a, EXAMINEE_LAST_NAME),
-      bookerName: blankToNull(`${a.firstName ?? ""} ${a.lastName ?? ""}`),
-      bookerEmail: blankToNull(a.email),
-      referrerEmail: this.formValue(a, this.referrerField),
-    };
+    return toSourceAppointment(a, this.referrerField);
   }
+}
 
-  private formValue(a: AcuityAppointment, fieldName: string): string | null {
-    for (const form of a.forms ?? []) {
-      for (const field of form.values ?? []) {
-        if (field.name.trim().toLowerCase() === fieldName) return blankToNull(field.value);
-      }
+/** Maps an Acuity appointment; referrerField is the lower-cased intake field name. */
+export function toSourceAppointment(a: AcuityAppointment, referrerField: string): SourceAppointment {
+  const startsAt = new Date(a.datetime);
+  const durationMinutes = Number.parseInt(a.duration, 10) || 0;
+
+  return {
+    acuityId: a.id,
+    acuityCalendarId: a.calendarID,
+    startsAt,
+    endsAt: new Date(startsAt.getTime() + durationMinutes * 60_000),
+    durationMinutes,
+    timezone: a.timezone,
+    appointmentTypeId: a.appointmentTypeID,
+    type: a.type,
+    canceled: a.canceled,
+    examineeFirstName: formValue(a, EXAMINEE_FIRST_NAME),
+    examineeLastName: formValue(a, EXAMINEE_LAST_NAME),
+    bookerName: blankToNull(`${a.firstName ?? ""} ${a.lastName ?? ""}`),
+    bookerEmail: blankToNull(a.email),
+    referrerEmail: formValue(a, referrerField),
+  };
+}
+
+function formValue(a: AcuityAppointment, fieldName: string): string | null {
+  for (const form of a.forms ?? []) {
+    for (const field of form.values ?? []) {
+      if (field.name.trim().toLowerCase() === fieldName) return blankToNull(field.value);
     }
-    return null;
   }
+  return null;
 }
